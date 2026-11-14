@@ -1,0 +1,32 @@
+name: Update episode title
+
+on:
+  schedule:
+    - cron: "17 * * * *"   # once an hour, at 17 minutes past
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-episode
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch newest episode title
+        run: python3 fetch_episode.py
+      - name: Commit if the title changed
+        run: |
+          if git diff --quiet -- episode.json; then
+            echo "No change."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add episode.json
+            git commit -m "Update episode title"
+            git push
+          fi
